@@ -1,0 +1,735 @@
+---
+title: "Opdracht Parkinson's Disease"
+author: "Joris Ouboter"
+date: "Februari 2024"
+output:
+  html_document:  
+    toc: true
+    toc_float: true
+    toc_depth: 4
+---
+
+
+# Introductie
+
+
+### Doel opdracht 
+
+Met deze opdracht ga je je kennis, begrip en vaardigheden op het gebied van R, statistiek en bio-informatica toepassen voor het oplossen van een biomedisch vraagstuk. Hierbij zullen we de  onderzoekscyclus volgen. Beginnend met het opstellen van een hypothese tot het speculeren over vervolgvragen die het onderzoek opwekt. 
+
+Het onderwerp is __ziekte van Parkinson (PD)__. In de opdracht zullen we gaan kijken of bepaalde auditieve kenmerken kunnen bijdragen aan de diagnostiek van de ziekte. De datasets die we gebruiken zijn publiek beschikbaar op de UC Irvine Machine Learning Repository (auditieve dataset) en de GEO database (RNA-seq dataset).
+
+### Inleveren en beoordeling
+De vragen en opdrachten worden ingeleverd voor een cijfer. Bij iedere opdracht staat vermeld hoeveel punten je kunt krijgen. Lever de antwoorden op de vragen en de code in als *RMarkdown file* of *R-script* met daarin de **code**, begeleid door voldoende **notities**. De code moet logische namen bevatten en de notities moeten begrijpelijk zijn voor een buitenstaander. Zorg ervoor dat de notities kort en bondig zijn, maar wel volledig. Figuren moeten direct leesbaar zijn voor een buitenstaander, d.m.v. het gebruik van titels, aslabels en bijvoorbeeld een legenda. De beoordeling van de codeeropdrachten zal ongeveer als volgt zijn:
+
+-	50% Antwoorden op de vragen. Hierbij zal er zijn aangegeven dat er een antwoord verwacht wordt.  
+
+*<span style="color:red">Antwoord</span>*   
+
+-	50% Juist werkende code – het script moet dus ook voor de docent werken, inclusief correcte en volledige annotatie. Hierbij zal het codeblok worden weergegeven:  
+
+```{r}
+# Type hier de uitleg van wat je doet en hieronder de code, bijvoorbeeld:
+# Maak een boxplot van de 'sepal length' voor alle bloemen in de iris dataset
+boxplot(iris$Sepal.Length)
+```
+
+
+De opdracht telt mee voor 10% van het eindcijfer van de cursus. Dit cijfer is een groepscijfer waarbij iedereen hetzelfde cijfer krijgt. Je mag bij gegronde redenen onderling de punten anders verdelen, stuur in dat geval een duidelijke motivatie mee naar de cursuscoördinator bij het inleveren van de opdracht. Zet duidelijk de **namen, studentnummers en het groepsnummer bovenin het bestand**. De inleverdatum is **maandag 18 maart, uiterlijk om 10:00**. Inleveren na deze deadline resulteert in het cijfer `1`. 
+
+
+### Bonuspunten
+Het gebruik van RMarkdown in plaats van een R-script wordt sterk aangeraden voor het creëren van overzicht: Figuren en data blijven geladen wanneer ze aangemaakt zijn, zodat je gemakkelijk terug kunt zien wat voor resultaten je hebt verkregen bij de verschillende vragen. Dit is wel nieuwe stof en zal daarmee op het begin extra tijd kosten, maar op termijn waarschijnlijk tijd besparen. Hierbij een link naar een kort filmpje dat laat zien wat je met een RMarkdown file kunt doen: https://rmarkdown.rstudio.com/lesson-1.html.   
+
+- Een RMarkdown file met daarin de vragen en code blokken staat op Blackboard. Als je gebruik maakt van RMarkdown krijg je 2 bonuspunten toegekend voor het onderdeel code met annotatie. 
+- Het exporteren van RMarkdown naar een (leesbaar) html bestand levert 2 bonuspunten op. Wanneer een print van de RNA seq dataset 50% van de ruimte het html bestand in beslag neemt krijg je deze bonuspunten niet.   
+- Sommige opdrachten zijn wat lastiger en niet verplicht. Met het maken van deze opdrachten kun je ook bonuspunten verdienen. 
+- Bonuspunten worden opgeteld bij de andere punten tot maximaal het cijfer 10.
+
+
+### Tips
+- Als je niet weet welke functie er nodig is voor een vraagstuk, kan je het beste Google of ChatGPT gebruiken om erachter te komen. Hiervoor typ je het vraagstuk zo specifiek mogelijk in, met de codeer-taal die je wilt gebruiken (R). Stackoverflow is een voorbeeld van een forum met nuttige informatie. 
+- Maak gebruik van de kennis en ervaring van je medestudenten uit de groep. Dat betekent dat je hulp en uitleg kunt vragen, niet dat je het de ander moeten laten uitvoeren. Op de toets moet je het uiteindelijk zelf doen. ;) 
+- Voor RMarkdown: Als je een functie runt met meerdere regels binnen een code block, dien je deze lines tegelijkertijd te selecteren en runnen. Anders krijg je een foutmelding. Dit geldt bijvoorbeeld voor het maken van een figuur of het uitvoeren van een for-loop.
+- Als je plaatjes uit het artikel wilt plakken in je html bestand kan dat met de onderstaande code. Let erop dat het bestand ook in de betreffende map (working directory) staat.
+
+![Ondertitel van het figuur](Rplot_test.png)
+
+
+### Beschikbare tijd
+
+Voor deze opdracht (deel 1 en deel 2) is de geschatte tijdsinvestering 10 uur. Afhankelijk van je ervaring en feeling met R en statistiek, evenals het uitvoeren van de bonusopdrachten kan dat afwijken.
+
+> Veel succes en plezier met de opdracht! 
+
+
+### Belangrijk
+Laad libraries voor correct gebruik functies.
+
+```{r message = FALSE, warning=FALSE}
+
+options(scipen=999)
+
+install.packages("plyr")
+install.packages("dplyr")
+install.packages("tidyverse")
+install.packages("margrittr")
+
+library(plyr)
+library(dplyr)
+library(tidyverse)
+library(magrittr)
+```
+
+***
+
+# Deel 1   
+  
+### Introductie   
+*Parkinson’s Disease* (PD) is een neurodegeneratieve ziekte die ertoe leidt dat specifieke neuronen uit de substantia nigra afsterven. Hierdoor kan er minder dopamine geproduceerd worden, wat uiteindelijk leidt tot bewegingsproblemen en karakterveranderingen. Zo kan een patiënt niet in een gevorderd stadium van de ziekte niet meer in een rechte lijn lopen zonder hevig te trillen. Een behandeling die de progressie van de ziekte stopt is er niet; er wordt slechts aan symptoombestrijding gedaan in de vorm van het medicijn L-DOPA. Dit medicijn zorgt voor een toename in de hoeveelheid dopamine in de hersenen, waardoor het dopamine-tekort in de hersenen vermindert.  
+
+Voor de diagnostiek van de ziekte wordt voornamelijk gebruik gemaakt van de aanwezige bewegingsproblemen. In een vroeg stadium van de ziekte is er echter nog weinig te zien; zo is een trillende hand vaak het enige zichtbare kenmerk. Dit maakt vroegtijdige diagnose lastig. Een aspect waarin PD zich relatief snel lijkt te manifesteren is in de spraak van de patiënt: de stembanden lijken niet goed meer gecontroleerd te worden door de stemspieren, waardoor er hoorbare trillingen ontstaan in de stem. Mogelijk kan deze trilling in de stem bijdragen aan vroegtijdige diagnose van de ziekte. 
+
+In het onderzoek van Naranjo et al.1 zijn spraakopnames gemaakt van 40 PD-patiënten en 40 gezonde controles. Per proefpersoon zijn er drie spraakopnames gemaakt, kort na elkaar. Aan de hand van de geluidsopnames zijn verschillende akoestische eigenschappen bepaald, die zijn samengevat in de vorm van een dataset. Hierin staan de resultaten voor de aparte geluidsopnames per proefpersoon onder elkaar gerangschikt. De resulterende dataset kan gevonden worden op Blackboard onder de naam ParkinsonDatabase.csv. In onderstaande ‘Attribute Information’ staat informatie over de gemeten parameters in de dataset. 
+
+*Attribute Information:*   
+
+-	ID: Subjects's identifier.   
+-	Recording: Number of the recording.   
+-	Status: 0 = Healthy; 1 = PD  
+- Gender: 0 = Man; 1 = Woman    
+-	Pitch local perturbation measures: relative jitter (Jitter_rel), absolute jitter (Jitter_abs), relative average perturbation (Jitter_RAP), and pitch perturbation quotient (Jitter_PPQ).   
+-	Amplitude perturbation measures: local shimmer (Shim_loc), shimmer in dB (Shim_dB), 3-point amplitude perturbation quotient (Shim_APQ3), 5-point amplitude perturbation quotient (Shim_APQ5), and 11-point amplitude perturbation quotient (Shim_APQ11).   
+-	Harmonic-to-noise ratio measures: harmonic-to-noise ratio in the frequency band 0-500 Hz (HNR05), in 0-1500 Hz (HNR15), in 0-2500 Hz (HNR25), in 0-3500 Hz (HNR35), and in 0-3800 Hz (HNR38).    
+-	Mel frequency cepstral coefficient-based spectral measures of order 0 to 12 (MFCC0, MFCC1,..., MFCC12) and their derivatives (Delta0, Delta1,..., Delta12).    
+-	Recurrence period density entropy (RPDE).   
+-	Detrended fluctuation analysis (DFA).   
+-	Pitch period entropy (PPE).   
+-	Glottal-to-noise excitation ratio (GNE).   
+-	Informed consent for scientific research (0 = No, 1 = Yes).   
+
+
+Het is de vraag *of* en *hoe* deze akoestische eigenschappen gebruikt kunnen worden voor het diagnosticeren van PD. In deel 1 van de opdracht stel je een onderzoeksvraag op over of *één van bovenstaande akoestische eigenschappen* gebruikt kan worden voor de diagnose PD. Daartoe gaan we onderzoeken of een bepaalde akoestische eigenschap *verschillend is* tussen PD-patiënten en gezonde controles. 
+
+### Opstellen hypothese en onderzoeksopzet
+#### Vraag 1 (10 punten)  
+a)	Is de onderzoeksopzet van Naranjo et al. observationeel of experimenteel? (2)  
+  
+*<span style="color:red">De onderzoekers in deze onderzoeksopzet voeren geen handelingen uit die gevolgen hebben voor de uiteindelijke metingen. Zij meten enkel de reeds bestaande status van het stemgeluid van PD patiënten en gezonde controles. Er is hier dus sprake van een observationele onderzoeksopzet.</span>*   
+
+b)	Is de onderzoeksopzet van Naranjo et al. retrospectief, cross-sectioneel of prospectief? (2)  
+  
+*<span style="color:red">Het onderzoek betreft metingen van het stemgeluid van twee populaties op één moment, waarbij de metingen in het heden worden gedaan door de onderzoekers zelf. Er lijkt geen sprake te zijn van herhaalde meetmomenten gedurende langere tijd. Men kan hier dus spreken van een cross-sectionele onderzoeksopzet.</span>*   
+
+c)	Kan een enkele parameter op zichzelf gebruikt worden voor het stellen van de diagnose PD? Beschrijf waarom dit wel/niet zo is. (2). 
+  
+*<span style="color:red">De ziekte van Parkinson is een zeer complexe ziekte die een onvoorstelbare impact op het leven van een patiënt heeft. Een diagnose met PD zet daarom het leven van een patiënt op zijn kop. Er dient daarom met de hoogst mogelijke zorgvuldigheid om te worden gegaan met deze diagnose, waarbij deze alleen met maximale zekerheid kan worden gesteld. Het gebruiken van slechts één enkele parameter voor het stellen van de diagnose PD past niet in dit beeld.</span>*   
+
+d)	Stel een onderzoeksvraag op over of één van bovenstaande akoestische kenmerken verschilt tussen PD-patiënten en gezonde controles. Maak de vraag duidelijk, relevant (waarom dit kenmerk?) en gefocust. (2)   
+  
+*<span style="color:red">Een veelal bekend symptoom van PD is tremor. Deze tremor kan mogelijk al in vroege stadia gedetecteerd worden in de stembanden, met behulp van metingen van het spraakgeluid. De onderzoeksvraag hierbij luidt: is er een significant verschil in trilling (relative jitter) in het stemgeluid van een PD patiënt, versus dat van een gezonde controle?</span>*   
+
+e)	Stel een nulhypothese en een alternatieve hypothese op bij de onderzoeksvraag. (2)  
+  
+*<span style="color:red">H0: μ = 0, waarbij μ = het verschil in trilling met (voor zover bekend) geen eenheid. Hα: μ =/= 0.</span>*   
+
+>Hierna ga je de hierboven beschreven onderzoeksvraag beantwoorden aan de hand van data-analyse in R.  
+
+
+### Informed consent
+Voor het gebruiken van de data van de patiënt voor statistiek is het van belang dat informed consent is gevraagd aan de patiënt. 
+
+#### Vraag 2 (2 punten)  
+  a) Wat houdt informed consent in het algemeen in? (1)
+  
+*<span style="color:red">Informed consent is een term die een procedure beschrijft waarbij een patiënt dusdanig voldoende geïnformeerd wordt dat hij of zij alle kennis heeft die nodig is om een onafhankelijke keuze te maken over het volgen van een behandeling en/of onderzoek. De verantwoording ligt bij de behandelaar /onderzoeker om de patiënt op de hoogte te stellen van alle voor- en nadelen een behandeling en/of onderzoek.</span>*   
+
+  b) Waarom is het van belang voor onze dataset? (1)
+  
+*<span style="color:red">Het gediagnosticeerd zijn met de ziekte van Parkinson is gevoelige informatie, waarvoor een patiënt legio aan redenen kan hebben om dit niet met anderen te delen. Naast het feit dat de onderzoekers zorgvuldig met deze informatie om dienen te gaan, is het ook van belang dat de patiënt geïnformeerd wordt over het verzamelen en gebruiken van deze informatie alvorens het onderzoek. </span>*   
+
+
+
+#### Vraag 3 (5 punten)
+
+Laad de dataset ParkinsonDatabase.csv in. (1)
+```{r }
+# Inlezen csv bestand vanuit working directory
+PD <- read.csv("ParkinsonDatabase.csv")
+```
+
+Selecteer de data van mensen die informed consent hebben gegeven en bewaar deze in een nieuw dataframe met de objectnaam `data_ic`. Controleer of de selectie gelukt is, en werk vanaf nu verder met dit nieuwe dataframe. (2)
+```{r }
+# Selecteren mensen die informed consent (= 1) hebben gegeven.
+data_ic = data.frame(PD[PD$informed_consent == "1",])
+
+# Controleren of selectie gelukt is
+dim(data_ic)
+head(data_ic)
+```
+
+Laat zien hoeveel metingen van patiënten met PD aanwezig zijn in de dataset, en hoeveel metingen van controles. (2)
+
+_Hint: check de Attribute Information om te zien welke parameter aangeeft of er sprake is van een gezonde controle of een PD-patiënt._
+
+```{r}
+# Laten zien patiënten met PD in dataset
+data_ic_pd = data.frame(data_ic[data_ic$Status == "1",])
+dim(data_ic_pd) # 111 PD patiënten
+
+
+# Laten zien gezonde controles in dataset
+data_ic_gezond = data.frame(data_ic[data_ic$Status == "0",])
+dim(data_ic_gezond) # 99 gezonde controles
+```
+
+
+### Verkennen data
+#### Vraag 4 (2 punten)
+
+Laat zien welke parameters er allemaal aanwezig zijn in de ingeladen dataframe. (1)
+
+```{r}
+# Laten zien aanwezige paramaters in dataframe
+colnames(data_ic)
+```
+
+Toon de eerste 15 rijen van de dataset. Besteed extra aandacht aan de parameter 'Recording'. (1)
+ 
+```{r}
+# Laten zien eerste 15 rijen van dataset
+data_ic[1:15,]
+```
+
+Zoals je kunt zien aan de parameter ‘Recording’ zijn er drie verschillende metingen per proefpersoon uitgevoerd. Dit is om de variatie vast te leggen die kan plaatsvinden tussen verschillende metingen van eenzelfde persoon. De resultaten hiervan zijn onder elkaar geplaatst in de dataset. Nu willen we graag de gemiddelde waarden hiervan bepalen.
+
+#### Vraag 5 (3 punten)
+a)	Noem **twee soorten variatie** waar we rekening mee moeten houden bij het meten van parameters binnen een proefpersoon. Geef per soort variatie een *voorbeeld* hoe deze variatie kan ontstaan binnen de metingen. (2)
+  
+*<span style="color:red">1. Het stemgeluid van patiënt kan veranderen na herhaalde meting(en). Deze verandering ontstaat bijvoorbeeld door het krijgen van een droge mond of zere keel. Dit kan variatie geven in vrijwel alle parameters, maar voornamelijk in bijvoorbeeld in de Harmonic-to-noise ratio bij hogere frequenties (HNR38). 2. Een patiënt kan mogelijk bij de eerste meting meer gespannen zijn dan bij de laatse meting. Dit zou bij de eerste meting voor meer trilling in de stem kunnen zorgen tegenover de laatste meting. Dit zou dan dus invloed kunnen hebben op de parameter "relative jitter" (Jitter_rel).</span>*   
+
+b)	Leg uit waarom het belangrijk is om gemiddelde waarden per proefpersoon te berekenen voordat we beginnen met statistische berekeningen. (1)
+  
+*<span style="color:red">Door de gemiddelde waarden per proefpersoon te berekenen wordt er rekenining gehouden met variatie binnen individuen en wordt er per individu een betrouwbaarder, algemener beeld geschetst./span>*   
+
+ 
+
+#### Vraag 6 (5 punten)
+
+Selecteer de metingen van de eerste proefpersoon met ID CONT-01 uit de dataset en bewaar deze in een nieuw dataframe. (1)
+
+```{r}
+# Selecteren ID CONT-01
+cont_01 = data.frame(data_ic[data_ic$ID == "CONT-01",])
+
+# Controle
+cont_01
+```
+
+Selecteer vervolgens uit dit nieuwe dataframe de kolommen met daarin de meetwaarden en bewaar deze in een nieuw dataframe. Met andere woorden: Maak een nieuw dataframe waarin je de kolommen met beschrijvingen verwijdert uit je dataframe. (1)
+_Hint: Kijk naar de 'Attribute Information' welke kolommen geen meetwaarden bevatten._
+
+```{r}
+# Selecteren benodigde kolommen
+m_cont_01 = data.frame(cont_01[,5:48])
+
+# Controle
+colnames(m_cont_01)
+m_cont_01
+```
+
+Bereken het gemiddelde voor de parameter die je hebt gekozen om te onderzoeken in *vraag 1* bij proefpersoon CONT-01. (1)
+
+```{r}
+# gemiddelde Jitter_rel van CONT-01
+mean(m_cont_01$Jitter_rel) # gemiddelde = 0.2867467
+```
+
+Bereken het gemiddelde voor alle parameters tegelijk voor proefpersoon CONT-01. Gebruik de functie `apply()`. (2)
+
+```{r}
+# gemiddeldes van alle parameters voor CONT-01
+apply(m_cont_01, 2, mean)
+```
+
+
+#### Vraag 7 (2 punten)
+Wat gebeurt er als je het gemiddelde probeert te bepalen zonder eerst de kolom-selectie te doen? Waarom is dit zo? (2)  
+  
+*<span style="color:red">De console geeft een foutmelding: dit komt omdat de kolomnamen character data zijn en niet numeric. </span>*   
+
+
+
+#### Vraag 8 (2 punten)
+Voordat we verder kunnen met het analyseren van de dataset moeten we de gemiddelde waardes van de drie metingen per proefpersoon verkrijgen. Omdat de code voor het berekenen hiervoor complex is, is deze al voor jullie geprogrammeerd. De variabelen in de code moeten nog aangepast worden zodat ze met jouw eigen variabelen matchen. 
+
+- Verwijder de '#' voor de code die hieronder staat!  
+- Vul op de plek van 'your_data' de naam van jouw dataframe in uit vraag 3. (1)   
+- Run vervolgens de code en sla de resulterende gemiddelde waardes per proefpersoon op in een nieuw dataframe. (1)   
+
+```{r}
+data_means = data_ic %>% group_by(ID, Status, Gender, informed_consent) %>% summarise_at(vars(colnames(data_ic)[-c(1:4, 49)]), mean) %>% ungroup()
+
+#Controle
+data_means
+
+```
+
+### Opstellen onderzoeksplan. 
+We willen onderzoeken of de waarden bij de verschillende parameters anders zijn in PD-patiënten dan in gezonde controles. Om te zien welke statistische testen er gebruikt kunnen worden voor de data, dient van tevoren bekeken worden of de data aan bepaalde voorwaarden voldoet. Ook voor een t-toets, waar onze voorkeur naar uitgaat, moet de data aan bepaalde voorwaarden voldoen. 
+
+#### Vraag 9 (6 punten)
+a)	Aan welke voorwaarden moet de data voldoen voor data-analyse met een t-toets? (2)  
+  
+*<span style="color:red">1: De data moet verkregen zijn volgens een SRS uit de populatie. 2: de parameter uit de populatie dient normaal verdeeld te zijn, weliswaar afhankelijk van de grootte van het sample: bij een sample size van minimaal n = 15 kan de t-toets toegepast worden tenzij er uitschieters of sterke scheefheid van de verdeling aanwezig is; bij een sample size van n >= 40 is een normaalverdeling van de populatie geen vereiste. </span>*   
+
+b)	Waarom is een t-toets geschikt voor de analyse van onze dataset? Beschrijf in je antwoord bij wat voor soort onderzoeksvraag normaal gesproken een t-toets gebruikt wordt voor data-analyse. (2)
+  
+*<span style="color:red">De t-toets wordt gebruikt in plaats van een z-toets wanneer de standaarddeviatie σ van de populatie niet bekend is. Dit is ook het geval in dit onderzoek, en dus wordt ook hier gebruik gemaakt van de t-toets.</span>*   
+
+c)	Welke t-toets moet uitgevoerd worden, een één-steekproef t-toets, een gepaarde t-toets of een twee onafhankelijke steekproeven t-toets? Licht je antwoord toe. (2)
+  
+*<span style="color:red">In dit onderzoek worden metingen gedaan onder twee groepen: PD patiënten en gezonde controles. Deze twee groepen zijn onafhankelijk van elkaar, en oefenen dus geen invloed uit op elkaar. De juiste keuze is hierom in dit geval een twee onafhankelijke steekproeven t-toets.</span>*   
+
+
+
+#### Vraag 10 (5 punten)
+
+- Maak een figuur met daarin de spreiding van de datapunten voor de parameter die je hebt gekozen om te onderzoeken in *vraag 1* voor alle data (**PD en controle in één boxplot**). (2)
+
+```{r}
+# Maken van boxplot
+boxplot(x = data_ic$Jitter_rel, 
+        main = "Relative Jitter alle data", 
+        xlab = "Onderzochten", 
+        ylab = "Rel. Jitter"
+        )
+```
+
+- Maak een figuur waarmee de spreiding van de datapunten gevisualiseerd wordt voor de parameter die je hebt gekozen om te onderzoeken in vraag 1, maar nu **één figuur met twee losse boxplots voor de data van PD-patiënten en de controles**. (1)
+
+```{r}
+# Maken boxplot
+boxplot(data_ic$Jitter_rel ~ data_ic$Status, data = data_ic,
+        main = "Relative Jitter Controles vs. PD Patiënt",
+        xlab = NULL,
+        ylab = "Rel. Jitter",
+        names = c("Gezond", "PD"),
+        ylim = c(0, 3)# Verbeteren visualiteit van data door 1 outlier uit plot te halen
+)
+
+```
+
+- Geef de waardes voor de verschillende kwartielen van de gemaakte boxplots **apart** weer voor de **patiënten met PD** en de **controles**. (2)
+
+```{r}
+summary(data_ic_pd$Jitter_rel) # Q1: 0.3488 Q3: 0.8209
+
+summary(data_ic_gezond$Jitter_rel) # Q1: 0.2836 Q3: 0.5947
+```
+
+#### Vraag 11 (5 punten)
+
+a)	Voldoet de data van de parameter die je hebt gekozen om te onderzoeken in vraag 1 aan de voorwaarden voor een t-toets? Leg uit aan de hand van de losse boxplots voor de PD- en controle-data. (2)
+  
+*<span style="color:red">Voor beide groepen is een rechtsscheve verdeling te zien. Omdat de n van beide groepen ver boven 40 ligt, is mate van normaliteit geen factor in het beslissen over de voorwaarden. </span>*   
+
+b)	Wat is het gevaar van het gebruik van een boxplot voor het bepalen van de verdeling? (1)  
+_Hint: vergelijk de boxplots gemaakt met de gecombineerde datapunten van PD-patiënten en controles met de aparte boxplots voor PD-patiënten en controles voor het bepalen van je antwoord._  
+*Antwoord*  
+  
+*<span style="color:red"> ???? </span>*   
+
+c)	Laat door middel van een andere type plot zien of er voldaan is aan de voorwaarden voor een t-toets. Gebruik eventueel de functie `par()` om meerdere figuren naast elkaar weer te geven. (2)    
+
+```{r}
+?par()
+par(mfrow = c(1,3))   #doet helemaal niks? Vermoedelijk door rmd omgeving
+
+hist(data_ic$Jitter_rel,
+     breaks = 50,
+     xlim = c(0,3),
+     main = "Histogram alle onderzochten",
+     xlab = "Rel. Jitter")
+
+hist(data_ic_pd$Jitter_rel,
+     breaks = 50,
+     xlim = c(0,3),
+     main = "Histogram PD patiënten",
+     xlab = "Rel. Jitter",
+     )
+
+hist(data_ic_gezond$Jitter_rel,
+     breaks = 10,
+     xlim = c(0,3),
+     main = "Histogram Gezonde Controles",
+     xlab = "Rel. Jitter")
+```
+
+Nu er gekeken is naar de voorwaarden voor een t-toets, kunnen we beginnen aan de daadwerkelijke analyse. Ook als je antwoorden bij de bovenstaande vragen aangeven dat de aannames voor het uitvoeren van de t-toets niet kloppen mag je de t-toets hieronder toch toepassen. Bij deze analyse zullen we bekijken welke parameters verschillend zijn voor PD-patiënten en gezonde controles. Hiervoor zullen we zoals besproken gebruik maken van aparte t-toetsen voor iedere parameter, en voor elke vergelijking apart de bijbehorende p-waarden berekenen. De code voor het verkrijgen van alle p-waarden die behoren bij de verschillende t-toetsen is al voor jullie geprogrammeerd. 
+
+#### Vraag 12 (4 punten)
+  
+- Doe allereerst een t-toets om te kijken of de parameter in *vraag 1* verschilt tussen PD-patiënten en controles. (1)  
+
+```{r}
+# T-toets
+t.test(data_ic$Jitter_rel ~ data_ic$Status, data = data_ic)
+
+# Het 95% BHI  [-0.38028172, -0.09326166] bevat niet de waarde 0. We kunnen met 95% zekerheid de nulhypothese H0: μ = 0 verwerpen, en tevens met 95% zekerheid stellen dat er een significant verschil is in Relative Jitter in PD patiënten versus gezonde controles
+```
+
+-	Bepaal vervolgens voor alle parameters tegelijk de p-waarde. Hiervoor kun je gebruik maken van de beschikbare code. Vul op de plek van 'your_data' de naam van je dataframe in met alleen de data waarvoor informed consent is. (1)  
+-	Run de code. Verwijder de '#' voordat je de code runt. Er verschijnt een vector p_value_vector met daarin de p-waarden van de gerunde analyse. Bepaal hoeveel van de parameters statistisch significant van elkaar verschillen tussen PD-patiënten en controles. Gebruik α = 0.05. (2)  
+
+```{r}
+
+p_value_vector <- c()
+counter <- 0
+all_interesting_columns <- colnames(data_means[-c(1:4)])
+
+for (i in all_interesting_columns) {
+  counter <- counter + 1
+  ttest <- t.test(data_means[data_means$Status == 0, i], data_means[data_means$Status == 1, i])
+   p_value_vector[counter] <- ttest$p.value
+  names(p_value_vector)[counter] <- i
+}
+
+p_value_vector
+
+```
+
+
+#### Vraag 13 (5 punten)
+a)	Wat voor informatie bevat de variabele `all_interesting_columns`? (1)
+  
+*<span style="color:red">Alle kolommen waarin metingen staan, en dus niet "ID", "Status", "Gender" en "informed consent".</span>*   
+
+b)	Wat zijn de waarden die `i` achtereenvolgens aanneemt in de for-loop? (1)
+  
+*<span style="color:red">De kolommen, oftewel achtereenvolgens elke parameter.</span>*   
+
+c)	Wat doet de `counter` in de for-loop? (1)
+  
+*<span style="color:red">Het 'verschuiven' van de p-waardes en parameters, zodat deze in de uiteindelijke vector onder elkaar komen te staan.</span>*   
+
+d)	Wat doet de `data_ic$Status == 0/1` in de for-loop? (1)
+  
+*<span style="color:red">Dit zorgt voor het onderscheid in de formule tussen PD patiëntgroep en gezonde controles.</span>*   
+
+e)	Wat doet de `names()` functie in de for-loop? (1)
+  
+*<span style="color:red">Deze functie zet de juiste naam van een parameter bij de juiste p-waarde.</span>*   
+
+
+
+De variabele p_value_vector bevat nu alle p-waardes voor de t-toetsen. Nu we deze verzameling p-waarden hebben verkregen, moet deze nog gecorrigeerd worden. 
+
+#### Vraag 14 (5 punten)
+a)	Leg in je eigen woorden uit wat een p-waarde is. Gebruik hierbij ook het begrip *fout positief*. (1)
+  
+*<span style="color:red">De p-waarde is de probabiliteit (kans) dat een gemeten waarde gemeten zou worden als de nulhypothese correct is. Dit betekent dat we de nulhypothese verwerpen terwijl deze eigenlijk waar is (type I-fout). Met andere woorden, de kans dat een meting een fout positief is. </span>*   
+
+b)	Stel dat er voor 100 verschillende parameters testen uitgevoerd worden of deze anders tot expressie komen bij PD-patiënten dan bij gezonde controles. Hoeveel van deze testen zal gemiddeld fout positief uitslaan bij α = 0.05? (1) 
+  
+*<span style="color:red">Gemiddeld zullen de testen van 5 van deze parameters een fout positief vertonen.</span>*   
+
+c)	Hoe heet de soort correctie die toegepast moet worden? (1)
+  
+*<span style="color:red">Een multiple testing correctie zal moeten worden toegepast.</span>*   
+
+d)	Waarom is het noodzakelijk om deze correctie te doen? (2)
+  
+*<span style="color:red">Bij het uitvoeren van meerdere testen met een ongecorrigeerde alfa neemt de kans op het maken van een type I fout sterk toe, en dus ook de kans op het één of meerdere keren trekken van een verkeerde conclusie. Om te voorkomen dat deze kans te hoog wordt, dient een correctie voor multiple testing gedaan te worden.</span>*   
+
+
+
+***
+### Intermezzo -- Corrigeren van p-waarden   
+Voor het corrigeren van p-waarden zijn verschillende methoden beschikbaar. Twee van de meest-gebruikte methoden zijn Bonferroni en Benjamini-Hochberg (BH). 
+
+Bij Bonferroni-correctie wordt de p-waarde gecorrigeerd op basis van de hoeveelheid testen die uitgevoerd is. De gedachtegang is dat iedere test de kans op een fout-positieve waarde vergroot, waardoor de verkregen p-waardes verhoogd worden zodat ze minder snel significant zijn. De gecorrigeerde p-waardes worden berekend door de oorspronkelijke p-waardes te vermenigvuldigen met het aantal testen dat is uitgevoerd. Ter illustratie is hieronder een tabel weergegeven met correcties voor verschillende p-waardes. 
+ 
+|p-waarde |	Berekening Bonferroni |	Bonferroni p-waarde |
+|:--------|:----------------------|:--------------------|
+|0.001    |	0.001 * aantal tests  |	0.005               |
+|0.002    |	0.002 * aantal tests  |	0.010               |
+|0.021    |	0.021 * aantal tests  |	0.105               |
+|0.044    |	0.044 * aantal tests  |	0.220               |
+|0.065    |	0.065 * aantal tests  |	0.325               |
+
+*Voorbeeld correctie van p-waardes met Bonferroni. Aantal testen = 5.*
+
+Bij BH wordt de p-waarde gecorrigeerd op basis van de ranking van de p-waardes qua hoogte. De p-waarden worden geordend van laag naar hoog en er wordt een nummer gegeven aan hun positie (‘ranking’). Vervolgens worden de p-waardes vermenigvuldigd met het totale aantal onafhankelijke testen dat uitgevoerd is, net zoals bij Bonferroni, maar bij deze test worden ze nog gedeeld door de ranking van de p-waarde.2 Alle testen met een BH p-waarde kleiner dan alfa worden dan aangemerkt als significant. Dit leidt er in de praktijk toe dat voornamelijk de lage p-waarden verhoogd worden, en de hogere p-waardes minimaal hoger worden.  
+ 
+| p-waarde | Berekening BH          | Ranking | BH p-waarde |
+|:---------|:-----------------------|:--------|:------------|
+|0.001	   |0.001 * # tests/ranking	|1	      |0.005        |  
+|0.002	   |0.002 * # tests/ranking	|2	      |0.005        |
+|0.021	   |0.021 * # tests/ranking	|3	      |0.035        |
+|0.044	   |0.044 * # tests/ranking	|4      	|0.055        |
+|0.061	   |0.061 * # tests/ranking	|5      	|0.061        |
+ 
+Voorbeeld correctie van p-waardes met Benjamini-Hochberg. Aantal testen = 5. De eerste drie testen zijn significant, want de BH p-waarde van rank 3 is lager dan 0.05, maar van rank 4 niet meer. 
+
+***
+
+
+
+#### Vraag 15 (4 punten)
+
+- Corrigeer de p-waardes met behulp van de correctie-methoden Bonferroni en Benjamini-Hochberg. 
+*Hint: gebruik hiervoor de functie `p.adjust()`.* (2)  
+
+```{r}
+?p.adjust
+# Bonferroni
+p.adjust(p_value_vector, method = "bonferroni")
+
+# Bejamini-Hochberg
+p.adjust(p_value_vector, method = "hochberg")
+```
+
+
+- Bekijk wat er gebeurt met de hoogte van de p-waarden. (1)   
+
+```{r}
+# De p-waarden stijgen allemaal, alhoewel dit meer het geval is bij de Bonferroni correctie.
+```
+
+
+- Bekijk voor beide correctie-methodes of deze ervoor zorgen dat er andere hoeveelheden statistisch significant verschillende parameters ontstaan. (1)    
+
+```{r}
+# De p-waarden tussen de Bonferroni-correctie en de Hochberg-correctie verschillen allemaal.
+```
+
+#### Vraag 16 (5 punten)  
+  a)	Maakt het uit welke correctiemethode gebruikt wordt voor het aantal statistisch significant verschillende parameters? (1)  
+  
+*<span style="color:red">Ja: de parameter MFCC1 ligt binnen alfa = 0.05 bij de BH-correctie, maar hierbuiten bij de Bonferroni correctie.</span>*   
+
+  b)	Wat betekent dit voor de mate van correctie bij de correctie bij de verschillende methoden? Bepaal welke van de twee methoden de p-waardes het meeste corrigeert. (2)   
+  
+*<span style="color:red">De Bonferroni correctie corrigeert de p-waardes het meest, omdat hierbij het aantal tests niet nog eerst wordt gedeeld door ranking, zoals het geval is bij de BH-correctie. Het getal waarmee de p-waardes vermenigvuldigt worden is hierom bij Bonferroni groter.</span>*   
+
+  c)	Welke van de twee correctiemethode wordt vaker toegepast bij RNA-seq experimenten? Licht je antwoord toe aan de hand van het aantal fout negatieven dat ontstaat bij de verschillende methoden, veroorzaakt door de verschillende wiskundige correctie-methodes. (2)  
+  
+*<span style="color:red">Een RNA-seq experiment zal kiezen voor de BH-correctie ten koste van de Bonferroni correctie. Dit komt omdat er bij RNA-seq zoveel metingen/toetsen gedaan worden, dat er zonder correctie voor dit grote aantal een enorm aantal fout negatieven zal ontstaan, zoals het geval is bij de Bonferroni correctie.De BH-correctie zorgt wel voor een dergelijke correctie door het delen van het aantal toetsen door de ranking van de p-waarde. </span>*   
+
+
+In de wetenschap worden p-waardes niet altijd gecorrigeerd. Aangezien de ongecorrigeerde p-waardes altijd lager uitvallen dan de gecorrigeerde waardes, is het als wetenschapper verleidelijk om voornamelijk gebruik te maken van ongecorrigeerde waarden. Immers, significante resultaten zijn mogelijk aantrekkelijker om te publiceren. Rondom de correctie van p-waardes is er hierdoor sprake van een ethische kwestie.  
+
+#### Vraag 17 (4 punten)
+
+  a)	Zowel de gecorrigeerde p-waarde als de ongecorrigeerde p-waarde zou gebruikt kunnen worden voor het beantwoorden van de onderzoeksvraag over de parameter naar keuze uit **vraag 1** voor het gebruik bij de diagnose van PD. Wanneer zou je de gecorrigeerde p-waarde gebruiken, en wanneer de ongecorrigeerde? Beargumenteer beide situaties. (2)  
+  
+*<span style="color:red">Antwoord</span>*   
+
+  b)	Zou je zeggen dat het gebruik van een ongecorrigeerde p-waarde als onderzoeker ethisch verantwoord is binnen een *clinical trial*? Beargumenteer je antwoord. (1)   
+  
+*<span style="color:red">Antwoord</span>*   
+
+  c)	Stel dat je binnen een clinical trial een statistisch significant verschil vindt, welke vervolgstappen zou je ondernemen om het gevonden verschil te valideren? (1)  
+  
+*<span style="color:red">Antwoord</span>*   
+
+  d)	Beantwoord met behulp van de juiste p-waarde de onderzoeksvraag die je bij **vraag 1** hebt opgesteld. (1)  
+  
+*<span style="color:red">Antwoord</span>*   
+
+
+
+Met het beantwoorden van de onderzoeksvraag zijn we op het eind aangekomen van deze onderzoekscyclus, en daarmee van deel 1 van de PD-opdracht. In het volgende onderdeel zullen we meer ingaan op mogelijkheden voor meer vroegtijdige diagnostiek, in plaats van wanneer de ziekte zich al volop manifesteert. 
+
+
+
+***
+
+# Deel 2
+
+## Introductie
+Op basis van de data uit de voorgaande dataset kan op overtuigende wijze bepaald worden of een patiënt lijdt aan de ziekte van Parkinson (PD) of een controle is. Helaas komen de klinische karakteristieken van PD pas tot uiting in een vergevorderd stadium, waardoor klinische interventie pas kan plaatsvinden wanneer er al onomkeerbare schade is aangericht aan de hersenen. Om deze redenen worden momenteel verschillende bio-informatica tools ontwikkeld voor vroegtijdige herkenning van de ziekte van PD in patiënten. Zo wordt er gekeken in bloedsamples of er bepaalde biomarkers aanwezig zijn. Ook wordt er met behulp van RNA-seq data bepaald welke genen anders tot expressie komen in PD-patiënten. Hiermee kunnen belangrijke gen-targets van PD geïdentificeerd worden, die eventueel gebruikt kunnen worden voor het ontwikkelen van nieuwe medicatie die de veranderde expressie tegengaat. Veranderde genexpressie betekent echter niet automatisch veranderde eiwit-expressie door verschillende regulatiemechanismen. Andersom betekent een veranderde eiwitexpressie ook niet automatisch een veranderde genexpressie. Dit bemoeilijkt de zoektocht naar geschikte gen-targets. 
+
+In de volgende opdracht zullen we ons gaan verdiepen in drie eiwitten naar keuze waarvan al via Western Blot analyses vastgesteld is dat ze belangrijk zijn voor het ontstaan van PD. Voor de gevonden eiwitten zullen we verder duiken in RNA-seq expressiedata van PD-patiënten en gezonde controles. Hierbij zullen we onderzoeken of de gevonden veranderde eiwit-expressie veroorzaakt wordt door andere genexpressies. 
+
+### Eiwit-expressie analyse 
+Het artikel dat gebruikt wordt voor de opdracht is te vinden met [deze link](https://www-nature-com.proxy.library.uu.nl/articles/s41598-020-70174-z).
+
+#### Vraag 1 (3 punten)
+Vind in het gegeven artikel 3 eiwitten die anders tot expressie lijken te komen in de substantia nigra in de hersenen van PD-patiënten vergeleken met controles. De eiwitten hoeven niet statistisch significant anders tot expressie te komen. Maak screenshots van onderdelen uit de figuren uit het artikel die laten zien dat de door jullie gekozen eiwitten anders tot expressie komen. Maak een **passend bijschrift** voor de afbeeldingen, waardoor direct te begrijpen valt wat er in de afbeelding te zien is. (3)
+
+> Een afbeelding kun je op de volgende manier invoegen:  
+
+*Let erop dat het bestand ook in de betreffende map (working directory) staat.*  
+
+![Ondertitel van het figuur](Rplot_test.png)  
+
+### RNA-expressie analyse
+Voor de gekozen eiwitten zullen we gaan onderzoeken of hun veranderde expressie veroorzaakt kan worden door veranderde RNA-expressie. We hebben een RNA-seq dataset met de naam count_matrix.csv. Let op: de gennamen in de RNA-seq dataset zijn HGNC symbolen. Zoek daarom eerst op wat de HGNC symbolen zijn van de drie gekozen eiwitten. Dit kan op [deze website](https://www.genenames.org/data/gene-symbol-report/#!/). Benoem de drie genen. (geen punten)   
+  
+*<span style="color:red">Antwoord</span>*   
+
+
+> Let op! Het is soms even puzzelen en niet alle gennamen van de betreffende eiwitten zijn terug te vinden in de RNA-seq database. Kies in dat geval een ander eiwit. 
+
+
+#### Vraag 2 (1 punt) 
+
+Laad de RNA-seq data in. (1)
+
+```{r}
+#
+```
+
+#### Vraag 3 (2 punten)
+Laat de eerste 10 rijen van de data zien voor visuele inspectie. Beschrijf vervolgens hoeveel controle samples er zijn, en hoeveel PD-patiënten. (2)  
+
+```{r}
+#
+```
+
+#### Vraag 4 (3 punten)
+Plot de distributie van alle *gene counts* per sample, voor alle samples in één plot. Transformeer de data met een log2-transformatie voor de visualisatie.  Voeg 1 toe aan alle gene counts voordat je de transformatie toepast, om errors te voorkomen (log2(0) bestaat niet). (3)
+
+```{r}
+#
+```
+
+#### Vraag 5 (2 punten)   
+Net zoals in het COO RNA-seq willen we genen die een lage of geen expressie hebben verwijderen uit onze dataset omdat ze geen nuttige informatie bevatten.    
+
+- Verwijder daarom de genen die in minder dan 75% van de samples tot expressie komen. (1)   
+
+```{r}
+#
+```
+
+- Bepaal hoeveel genen je over hebt. (1)   
+
+```{r}
+#
+```
+
+#### Vraag 5B (3 bonuspunten) 
+Ook genen met lagere expressie zijn over het algemeen minder interessant voor analyse. Verwijder de genen met lage expressie (gemiddelde expressie per gen < 5). Volg hiervoor het volgende stappenplan:   
+
+  a.	Bereken de gemiddelde expressie per gen. Sla de resulterende vector op in een nieuwe variabele. (1)   
+  b.	Check welke gemiddelde genexpressiewaardes hoger zijn dan 5. Hieruit krijg je een logical vector met TRUE / FALSE waarden. Sla deze zogeheten ‘boolean vector’ op als een nieuwe vector. (0.5)  
+  c.	Selecteer met behulp van de boolean vector de juiste genen van de RNA-seq dataset die een **hogere gemiddelde expressie hebben dan 5 counts** in alle samples samen. (1)   
+  d.	Maak ook een dataframe aan met daarin de genen van de RNA-seq dataset die een **lagere gemiddelde expressie hebben dan 5 counts**. (0.5)    
+  e.	Controleer of je subselectie gelukt is in de verschillende dataframes.    
+
+
+```{r}
+#
+```
+
+
+#### Vraag 6 (1 punt)	
+Maak een nieuw dataframe waarin de kolommen omgewisseld zijn met de rijen in je dataset. Gebruik als input de dataset uit vraag 4 **of** vraag 4b (als je die hebt gemaakt). Gebruik de functie `t()` – ook wel transponeren genoemd. Dit is noodzakelijk voor de volgende opdrachten, want we willen de genen als variabelen in de kolommen. Kijk goed naar de structuur van het nieuwe object. 
+
+```{r}
+#
+```
+
+
+#### Vraag 7 (2 punten, 1 bonuspunt)	
+Maak een figuur van het expressie-level van de genen van de drie gekozen eiwitten van PD-patiënten ten opzichte van gezonde controles. Hiervoor heb je twee opties (kies er één, doe je beide opties dan levert de extra optie 1 bonuspunt op):  
+
+  a.	Je splitst de dataset op in twee dataframes, waarvan een alleen de PD-patiënten bevat, en de andere alleen de controles. (2)  
+```{r}
+#
+```
+
+  b.	Je maakt een nieuwe kolom die aangeeft of een bepaalde rij een patiënt of controle bevat. Over het algemeen wordt deze tweede methode als 'netter' beschouwd. (2)  
+```{r}
+#
+```
+
+
+#### Vraag 8 (2 punten)	 
+Bepaal of de genexpressie van de genen (die je hebt gekozen op basis van de drie gekozen eiwitten) normaal verdeeld is.   
+*Hint: Gebruik een qqplot.*
+
+```{r}
+# 
+```
+
+
+#### Vraag 9 (3 punten)	 
+Bepaal voor alle genen of ze anders tot expressie komen. Onafhankelijk van het antwoord bij de vorige vraag gebruik je hiervoor een t-toets. Gebruik eenzelfde for-loop als bij PD deel 1 gebruikt is.  
+*Hint: Pas de t.test functie aan op basis van je antwoord bij vraag 6. Je kunt de t-toets zowel runnen op basis van twee verschillende datasets die met elkaar vergeleken worden (optie a), als door middel van het splitsen van een enkele dataset binnen t.test via een formule-notatie (`~`), waarbij een kolom gebruikt wordt om aan te geven in welke groep iemand zit: patiënt of controle (optie b).*
+
+Wat hulp om de for-loop te creëren:
+
+1) Bepaal welke parameters je wilt gebruiken om overheen te 'loopen'. **Belangrijk**: Verwijder alle niet numerieke parameters van tevoren! 
+2) Includeer een counter om de locatie te kunnen specificeren binnen een vector waar je de uitkomst van de test in opslaat. 
+3) Bewaar de uitkomst van de statistische test in een variabele.
+4) Bewaar de p-waarde van de statische test in vector `p_value_vector` op een gespecificeerde locatie. 
+5) Schrijf de naam van de parameter in vector `p_value_vector` op een gespecificeerde locatie. 
+
+Vergeet niet om eerst de `p_value_vector` en de `counter` aan te maken voordat je de `for-loop` runt! Anders zal R de for-loop niet willen runnen, omdat de variabelen die ervoor nodig zijn niet bestaan. 
+
+Uiteindelijk zou de vector p_value_vector de p-waardes voor elke gen moeten bevatten. 
+
+```{r}
+#
+```
+
+#### Vraag 10 (1 punt)	
+Laat zien wat de ongecorrigeerde p-waardes zijn van de genen van de drie gekozen eiwitten uit het artikel en bewaar deze in een nieuwe vector. (1)  
+
+```{r}
+#
+```
+
+#### Vraag 10B (1 bonuspunt)
+Bonus: Gebruik de `%in%` operator voor deze selectie van de genen. `%in%` geeft een boolean vector die aangeeft of er een match aanwezig is of niet, en kan daarmee specifieke rijen of kolommen selecteren vanuit een dataframe. De `%in%` operator is al eerder voorbij gekomen in het COO RNA-seq. Hieronder staat een ander voorbeeld weergegeven.
+
+```{r}
+# Voorbeeld %in% operator (dit voorbeeld mag verwijderd worden en/of vervangen door het antwoord op deze vraag)
+
+a <- seq(1:10)
+b <- c(1,2)
+
+a %in% b
+
+# Kijkt of waardes uit a voorkomen in b. Geeft booleans (TRUE & FALSE) terug. 
+# Waardes 1 en 2 uit b zijn allebei aanwezig in vector a, de rest niet. 
+# Daarom worden de eerste twee booleans TRUE, en de rest FALSE 
+
+```
+
+
+#### Vraag 11 (2 punten)  
+
+- Leg uit of de p-waarden van de genen gecorrigeerd moeten worden.   
+  
+*<span style="color:red">Antwoord</span>*   
+
+- Onafhankelijk van het antwoord hierboven: bereken de gecorrigeerde p-waarden voor de drie gekozen genen hieronder. 
+```{r}
+#
+```
+
+
+#### Vraag 12 (3 punten)
+Wat is je conclusie met betrekking tot de genexpressie die je op basis van de verschillende eiwitten uit het artikel hebt bekeken? Geef een korte verklaring (max. 10 regels) bij de gevonden resultaten: wat zijn twee mogelijke verklaringen waarom de genen wel/niet anders tot expressie komen? (3)  
+  
+*<span style="color:red">Antwoord</span>*   
+
+
+
+## Einde
+
+Dit brengt ons op het einde van de PD-opdracht. De opdrachten en antwoorden ontvangen we graag op e-mailadres [J.A.L.Meeuwsen-2@umcutrecht.nl](mailto:J.A.L.Meeuwsen-2@umcutrecht.nl). Er zal een gezamenlijke nabespreking gehouden worden over de opdracht op maandag 18-03-2023 om 10:00. Aanwezigheid bij deze nabespreking is niet verplicht, maar wordt wel sterk aangeraden; er zullen ook toetsvragen komen over dit onderdeel. Hopelijk tot dan! 
+
+### Bronnen  
+
+- [1] Naranjo, L., Pérez, C.J., Campos-Roca, Y., Martín, J.: Addressing voice recording replications for Parkinson’s disease detection. Expert Systems With Applications 46, 286-292 (2016).   
+- [2] Jafari M, Ansari-Pour N. Why, When and How to Adjust Your P Values?. Cell J. 2019;20(4):604-607. doi:10.22074/cellj.2019.5992. 
+
+> EINDE
+
+***
