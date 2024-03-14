@@ -563,12 +563,19 @@ Vind in het gegeven artikel 3 eiwitten die anders tot expressie lijken te komen 
 
 *Let erop dat het bestand ook in de betreffende map (working directory) staat.*  
 
-![Ondertitel van het figuur](Rplot_test.png)  
+![Expressie van ATF4 in verscheidene hersengebieden](artikel_atf4.png)  
+**Figuur 1: De expressie van ATF4 in verscheidene hersengebieden. Van belang is het expressieniveau van dit eiwit in de substantia nigra (SNpc) en het verschil daarin tussen controles en PD patiënten.**
+
+![Expressie van DLG4 in verscheidene hersengebieden](artikel_dlg4.png)
+**Figuur 2: De expressie van PSD95 in verscheidene hersengebieden. Wederom is hier van belang het expressieniveau van dit eiwit in de substantia nigra en het verschil daarin tussen controles en PD patiënten.**
+
+![Expressie van Hspa5 in verscheidene hersengebieden](artikel_hspa5.png)
+**Figuur 2: De expressie van GRP78 in verscheidene hersengebieden.Er is, net als bij eerdere figuren, een verschil in expressie op te merken van GRP78 in de substantia nigra tussen controles en PD patiënten.**
 
 ### RNA-expressie analyse
 Voor de gekozen eiwitten zullen we gaan onderzoeken of hun veranderde expressie veroorzaakt kan worden door veranderde RNA-expressie. We hebben een RNA-seq dataset met de naam count_matrix.csv. Let op: de gennamen in de RNA-seq dataset zijn HGNC symbolen. Zoek daarom eerst op wat de HGNC symbolen zijn van de drie gekozen eiwitten. Dit kan op [deze website](https://www.genenames.org/data/gene-symbol-report/#!/). Benoem de drie genen. (geen punten)   
   
-*<span style="color:red">Antwoord</span>*   
+*<span style="color:red">| ATF4 = ATF4 | PSD95 = DLG4 | GRP78 = Hspa5 |</span>*   
 
 
 > Let op! Het is soms even puzzelen en niet alle gennamen van de betreffende eiwitten zijn terug te vinden in de RNA-seq database. Kies in dat geval een ander eiwit. 
@@ -579,13 +586,14 @@ Voor de gekozen eiwitten zullen we gaan onderzoeken of hun veranderde expressie 
 Laad de RNA-seq data in. (1)
 
 ```{r}
-#
-```
+# Inlezen van Count_matrix.txt
+rna_seq = read.table("count_matrix.txt")
 
 #### Vraag 3 (2 punten)
 Laat de eerste 10 rijen van de data zien voor visuele inspectie. Beschrijf vervolgens hoeveel controle samples er zijn, en hoeveel PD-patiënten. (2)  
 
-```{r}
+rna_seq[1:10,]
+# Er zijn 8 samples per controle, en 8 per PD-patiënt
 #
 ```
 
@@ -593,7 +601,9 @@ Laat de eerste 10 rijen van de data zien voor visuele inspectie. Beschrijf vervo
 Plot de distributie van alle *gene counts* per sample, voor alle samples in één plot. Transformeer de data met een log2-transformatie voor de visualisatie.  Voeg 1 toe aan alle gene counts voordat je de transformatie toepast, om errors te voorkomen (log2(0) bestaat niet). (3)
 
 ```{r}
-#
+# Barplot van log2 van de som van alle waardes per kolom.
+barplot(colSums(log2(rna_seq+1)), names = colnames(rna_seq), ylab = "Gene counts (log2)")
+
 ```
 
 #### Vraag 5 (2 punten)   
@@ -602,13 +612,17 @@ Net zoals in het COO RNA-seq willen we genen die een lage of geen expressie hebb
 - Verwijder daarom de genen die in minder dan 75% van de samples tot expressie komen. (1)   
 
 ```{r}
-#
+rna_selected <- rna_seq[rowSums(rna_seq > 0) > 12,]
+head(rna_selected)
 ```
 
 - Bepaal hoeveel genen je over hebt. (1)   
 
 ```{r}
-#
+dim(rna_seq)
+dim(rna_selected)
+
+# Er zijn 21201 rijen, en dus genen, over.
 ```
 
 #### Vraag 5B (3 bonuspunten) 
@@ -622,7 +636,7 @@ Ook genen met lagere expressie zijn over het algemeen minder interessant voor an
 
 
 ```{r}
-#
+
 ```
 
 
@@ -630,7 +644,9 @@ Ook genen met lagere expressie zijn over het algemeen minder interessant voor an
 Maak een nieuw dataframe waarin de kolommen omgewisseld zijn met de rijen in je dataset. Gebruik als input de dataset uit vraag 4 **of** vraag 4b (als je die hebt gemaakt). Gebruik de functie `t()` – ook wel transponeren genoemd. Dit is noodzakelijk voor de volgende opdrachten, want we willen de genen als variabelen in de kolommen. Kijk goed naar de structuur van het nieuwe object. 
 
 ```{r}
-#
+rna_seq_t = t(rna_selected)
+head(rna_seq_t)
+
 ```
 
 
@@ -639,7 +655,7 @@ Maak een figuur van het expressie-level van de genen van de drie gekozen eiwitte
 
   a.	Je splitst de dataset op in twee dataframes, waarvan een alleen de PD-patiënten bevat, en de andere alleen de controles. (2)  
 ```{r}
-#
+
 ```
 
   b.	Je maakt een nieuwe kolom die aangeeft of een bepaalde rij een patiënt of controle bevat. Over het algemeen wordt deze tweede methode als 'netter' beschouwd. (2)  
